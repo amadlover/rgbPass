@@ -1,0 +1,43 @@
+global string $folderPath;
+global string $fileName;
+
+global proc setShaders()
+{
+	global string $folderPath;
+	global string $fileName;
+
+	setupRGBShaders -fp $folderPath -fn $fileName;
+}
+
+global proc setFileName()
+{
+	global string $fileName;
+	$fileName = `textFieldGrp -q -text fileNameField`;
+}
+
+global proc setFolderPath( string $fileName, string $fileType )
+{
+	global string $folderPath;
+	$folderPath = $fileName;
+	textFieldButtonGrp -edit -text $folderPath folderField;
+}
+
+global proc getFolderPath()
+{
+	fileBrowserDialog -m 4 -an "Select Directory" -fc setFolderPath;
+}
+
+global proc nkPassWindow()
+{
+	if( `window -exists nkPassWnd` )
+		deleteUI -wnd nkPassWnd;
+
+	window -title "nkShaderAssign" -wh 300 300 -resizeToFitChildren true nkPassWnd;
+	columnLayout -adjustableColumn true;
+	textFieldGrp -label "FileName:" -cc setFileName fileNameField;
+	textFieldButtonGrp -label "FolderPath" -bl "Browse" -editable false -bc getFolderPath folderField;
+	button -label "Set Shaders" -c setShaders;
+	showWindow nkPassWnd;
+}
+
+nkPassWindow;

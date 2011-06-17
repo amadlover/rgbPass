@@ -1,0 +1,19 @@
+declare shader
+	color "nkPass" (
+		integer "layerNumber",
+		color "color"
+	)
+	version 1
+	apply material
+end declare
+
+declare shader
+	color "nkSaver" (
+		integer "numLayers",
+		string "fileName",
+		string "folderPath",
+		string "camName"
+	)
+	version 1
+	apply output
+end declare

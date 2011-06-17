@@ -1,0 +1,64 @@
+	string $objs[] = `ls -g`;
+	string $meshes[];
+
+	for( $each in $objs ) {
+		if( `objectType $each` == "mesh" ) {
+			string $parent[] = `listRelatives -parent $each`;
+			$meshes[ size( $meshes )] = $parent[0];
+		}
+	}
+
+	int $numLayers = size( $meshes ) / 3;
+
+	if( $numLayers == 0 && size( $meshes ) > 0 )
+		$numLayers++;
+
+	if( size( $meshes ) % 3 > 0 && size( $meshes ) > 3 )
+		$numLayers++;
+
+	int $l;
+
+	for( $l = 0; $l < $numLayers; $l++ ) {
+		string $mrUserBuffer = `createNode mentalrayUserBuffer`;
+		connectAttr -f ( $mrUserBuffer + ".message" ) ( "miDefaultOptions.frameBufferList[" + $l + "]" );
+		setAttr ( $mrUserBuffer + ".dataType" ) 5;
+
+		int $i = 0;
+
+		for( $i = 0; $i < 3; $i++ ) {
+			if( $meshes[ $l * 3 + $i ] == "" ) continue;
+
+			string $nkPass = `shadingNode -asShader nkPass`;
+			string $nkPassSG = `sets -renderable true -noSurfaceShader true -empty -name ( $nkPass + "SG" )`;
+			connectAttr -f ( $nkPass + ".outValue" ) ( $nkPassSG + ".miMaterialShader" );
+			sets -e -forceElement $nkPassSG $meshes[ $l * 3 + $i ];
+			setAttr ( $nkPass + ".layerNumber" ) $l;
+
+			if( $i == 0 )
+				setAttr ($nkPass + ".color" ) 1 0 0;
+
+			if( $i == 1 )
+				setAttr ($nkPass + ".color" ) 0 1 0;
+
+			if( $i == 2 )
+				setAttr ($nkPass + ".color" ) 0 0 1;
+
+		}
+	}
+
+	string $camShapes[] = `ls -cameras`;
+
+	for( $cam in $camShapes ) {
+		if( `getAttr ( $cam + ".renderable")` ) {
+			string $mrOutputPass = `createNode mentalrayOutputPass`;
+			string $nkSaver = `createNode nkSaver`;
+			
+			connectAttr -f ( $nkSaver + ".outValue" ) ( $mrOutputPass + ".outputShader" );
+			connectAttr -f ( $mrOutputPass + ".message" ) ( $cam + ".miOutputShaderList[0]" );
+			
+			setAttr -type "string" ( $nkSaver + ".camName" ) `listRelatives -parent $cam`;
+			setAttr -type "string" ( $nkSaver + ".fileName" ) $fileName;
+			setAttr -type "string" ( $nkSaver + ".folderPath" ) $folderPath;
+			setAttr ( $nkSaver + ".numLayers" ) $numLayers;
+		}
+	}
